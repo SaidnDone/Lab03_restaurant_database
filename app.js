@@ -34,19 +34,29 @@ app.get('/restaurants/cuisine/:cuisine', async (req, res) => {
 });
 
 // Route to get restaurants with selected columns and sorting by restaurant_id
-app.get('/restaurants', async (req, res) => {
-    const { sortBy } = req.query;
+// http://localhost:3000/restaurants/sorted/ASC
+// http://localhost:3000/restaurants/sorted/DESC
+app.get('/restaurants/sorted/:sortOrder', async (req, res) => {
+    const { sortOrder } = req.params;
 
     try {
-        const sortOrder = sortBy === 'DESC' ? -1 : 1;
+        const validSortOrders = ['ASC', 'DESC'];
+
+        if (!validSortOrders.includes(sortOrder)) {
+            return res.status(400).json({ error: 'Invalid sortOrder parameter. Use ASC or DESC.' });
+        }
+
         const restaurants = await Restaurant.find()
-            .select('id cuisines name city restaurant_id -_id')
-            .sort({ restaurant_id: sortOrder });
+            .select('id cuisine name city restaurant_id')
+            .sort({ restaurant_id: sortOrder === 'DESC' ? -1 : 1 });
+
         res.json(restaurants);
     } catch (error) {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
+
+
 
 // Route to get restaurants where all cuisines are Delicatessen and city is not Brooklyn
 app.get('/restaurants/:cuisine', async (req, res) => {
